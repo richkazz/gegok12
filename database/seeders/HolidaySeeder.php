@@ -75,10 +75,12 @@ class HolidaySeeder extends Seeder
                 foreach ($yearHolidays as $h) {
                     DB::table('events')->insert([
                         'school_id' => $school->id,
-                        'academic_year_id' => $academic_year->id,
+                        'academic_year_id' => $academic_year ? $academic_year->id : 1,
                         'select_type' => 'school',
                         'title' => $h[0],
                         'category' => 'holidays',
+                        'batch' => '',
+                        'color' => '#3788d8',
                         'start_date' => $h[1] . ' 00:00:00',
                         'end_date' => $h[2] . ' 00:00:00',
                         'created_at' => now(),
