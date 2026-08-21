@@ -14,17 +14,10 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     libicu-dev \
     libssl-dev \
+    libsqlite3-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd intl \
+    && docker-php-ext-install pdo_mysql pdo_sqlite mbstring zip exif pcntl bcmath gd intl xml \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# ----------------------------
-# Install Node.js (LTS version)
-# ----------------------------
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
-    && node -v \
-    && npm -v
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -32,12 +25,25 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www
 
+# Copy application source
+COPY . /var/www
+
+# Copy entrypoint script
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 # Fix Git "dubious ownership" issue automatically
 RUN git config --system --add safe.directory /var/www
 
-# Ensure correct permissions for Laravel
-RUN chown -R www-data:www-data /var/www \
-    && chmod -R 775 /var/www
+# Ensure directories exist and set appropriate permissions
+RUN mkdir -p /var/www/storage/framework/cache/data \
+             /var/www/storage/framework/sessions \
+             /var/www/storage/framework/views \
+             /var/www/storage/logs \
+             /var/www/bootstrap/cache \
+    && touch /var/www/storage/installed \
+    && chown -R www-data:www-data /var/www \
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
-# Switch to www-data user (recommended for Laravel)
-USER www-data
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["php-fpm"]
