@@ -3,7 +3,7 @@ name: CI/CD Deployment
 on:
   push:
     branches:
-      - host
+      - host-5233669348790209883
 
 permissions:
   contents: read
