@@ -27,7 +27,7 @@ if [ ! -f /var/www/.env ]; then
     fi
 fi
 
-# Ensure storage directory structure and installation marker exist
+# Ensure storage directory structure exists
 mkdir -p /var/www/storage/framework/cache/data \
          /var/www/storage/framework/sessions \
          /var/www/storage/framework/views \
@@ -35,11 +35,28 @@ mkdir -p /var/www/storage/framework/cache/data \
          /var/www/storage/app/public \
          /var/www/bootstrap/cache
 
-if [ ! -f /var/www/storage/installed ]; then
-    touch /var/www/storage/installed
+chmod -R 777 /var/www/storage /var/www/bootstrap/cache 2>/dev/null || true
+
+# Ensure APP_KEY exists in .env
+if [ -f /var/www/.env ]; then
+    if ! grep -q "^APP_KEY=base64:" /var/www/.env; then
+        php /var/www/artisan key:generate --force || true
+    fi
 fi
 
-chmod -R 777 /var/www/storage /var/www/bootstrap/cache 2>/dev/null || true
+# Run database migrations and seeding automatically
+if [ -f /var/www/artisan ]; then
+    if [ ! -f /var/www/storage/installed ]; then
+        echo "Performing initial setup: running migrations and database seeding..."
+        php /var/www/artisan migrate --force
+        php /var/www/artisan db:seed --force
+        touch /var/www/storage/installed
+    else
+        echo "Application already installed. Running database migrations..."
+        php /var/www/artisan migrate --force
+    fi
+    php /var/www/artisan storage:link --force 2>/dev/null || true
+fi
 
 # Ensure public/storage symlink points correctly inside container
 rm -f /var/www/public/storage
