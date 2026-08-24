@@ -32,25 +32,10 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
-      - name: Setup Environment and App Key
-        run: |
-          cp .env.example .env
-          php artisan key:generate
-
       - name: Install NPM dependencies and build assets
         run: |
           npm install
           npm run prod
-
-      - name: Run Database Migrations and Seeding
-        run: |
-          touch database/database.sqlite
-          sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=sqlite/' .env
-          sed -i 's#DB_DATABASE=.*#DB_DATABASE=database/database.sqlite#' .env
-          php artisan migrate --force
-          php artisan db:seed --force
-          touch storage/installed
-          rm -f .env
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
