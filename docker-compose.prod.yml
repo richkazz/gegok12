@@ -57,17 +57,6 @@ services:
       - app
     networks:
       - laravel
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: cloudflared_tunnel
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run
-    environment:
-      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
-    networks:
-      - laravel
-    depends_on:
-      - nginx
 
 networks:
   laravel:

@@ -3,7 +3,7 @@ name: CI/CD Deployment Workflow
 on:
   push:
     branches:
-      - host-2162810446570755875
+      - host
   workflow_dispatch:
 
 jobs:
@@ -59,7 +59,7 @@ jobs:
         run: echo "REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Build and Push Docker Image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
@@ -68,7 +68,19 @@ jobs:
             ghcr.io/${{ env.REPO_LOWER }}:latest
             ghcr.io/${{ env.REPO_LOWER }}:${{ github.sha }}
 
+      - name: Copy Deployment Configuration to Remote Server
+        if: ${{ secrets.SERVER_IP != '' }}
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          source: "docker-compose.prod.yml,nginx.conf,php.ini"
+          target: "apps/gego12"
+
       - name: Deploy to Remote Server via SSH
+        if: ${{ secrets.SERVER_IP != '' }}
         uses: appleboy/ssh-action@v1.0.3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
