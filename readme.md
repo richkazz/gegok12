@@ -6,7 +6,6 @@
 ## Version
 
 **v1.1**
-j
 ---
 
 ## System Requirements
